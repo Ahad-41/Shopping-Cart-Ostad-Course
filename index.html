@@ -20,6 +20,13 @@
                 <div class="cart-box p-4 rounded shadow-lg">
                     <h3 class="mt-3 text-center">Your Cart</h3>
                     <ul id="cart-items" class="list-group mb-3"></ul>
+                    <p class="fs-5 text-center">Subtotal: <strong>$<span id="cart-subtotal">0.00</span></strong></p>
+                    <div class="mb-3">
+                        <input type="text" id="promo-code" class="form-control" placeholder="Enter promo code">
+                        <button id="apply-promo" class="btn btn-primary w-100 mt-2">Apply Promo</button>
+                        <p id="promo-message" class="text-danger mt-2 text-center"></p>
+                    </div>
+                    <p class="fs-5 text-center">Discount: <strong>$<span id="cart-discount">0.00</span></strong></p>
                     <p class="fs-5 text-center">Total: <strong>$<span id="cart-total">0.00</span></strong></p>
                     <div class="d-flex justify-content-between">
                         <button id="clear-cart" class="btn btn-danger w-50 me-2">Clear Cart</button>
