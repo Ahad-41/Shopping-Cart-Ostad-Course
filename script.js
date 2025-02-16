@@ -1,10 +1,37 @@
 const productsContainer = document.getElementById("products");
 const cartItemsContainer = document.getElementById("cart-items");
+const cartSubtotal = document.getElementById("cart-subtotal");
+const cartDiscount = document.getElementById("cart-discount");
 const cartTotal = document.getElementById("cart-total");
-const checkoutTotal = document.getElementById("checkout-total");
 const clearCartButton = document.getElementById("clear-cart");
 const checkoutButton = document.getElementById("checkout");
+const promoInput = document.getElementById("promo-code");
+const applyPromoButton = document.getElementById("apply-promo");
+const promoMessage = document.getElementById("promo-message");
 let cart = JSON.parse(sessionStorage.getItem("cart")) || [];
+let appliedPromo = null;
+
+const promoCodes = {
+    "ostad10": 0.10,
+    "ostad5": 0.05
+};
+
+applyPromoButton.addEventListener("click", () => {
+    const promoCode = promoInput.value.trim().toLowerCase();
+    if (appliedPromo) {
+        promoMessage.textContent = "Promo code already applied!";
+        return;
+    }
+    if (promoCodes[promoCode]) {
+        appliedPromo = promoCodes[promoCode];
+        promoMessage.textContent = "Promo code applied successfully!";
+        promoMessage.classList.replace("text-danger", "text-success");
+    } else {
+        promoMessage.textContent = "Invalid promo code!";
+        promoMessage.classList.replace("text-success", "text-danger");
+    }
+    updateCart();
+});
 
 async function fetchProducts() {
     const res = await fetch("https://fakestoreapi.com/products");
@@ -44,25 +71,27 @@ function showDetails(title, description) {
     productModal.show();
 }
 
-function addToCart(id, title, price) {
-    const existingItem = cart.find(item => item.id === id);
-    if (existingItem) {
-        existingItem.quantity += 1;
-    } else {
-        cart.push({ id, title, price, quantity: 1 });
-    }
-    updateCart();
+function addToCart(productId) {
+    fetch("https://fakestoreapi.com/products/" + productId)
+        .then(res => res.json())
+        .then(product => {
+            const existingItem = cart.find(item => item.id === productId);
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+            updateCart();
+        });
 }
 
 function updateCart() {
     cartItemsContainer.innerHTML = "";
-    let total = 0;
+    let subtotal = 0;
 
     cart.forEach((item, index) => {
-        total += item.price * item.quantity;
-
+        subtotal += item.price * item.quantity;
         const truncatedTitle = item.title.length > 12 ? item.title.substring(0, 12) + "..." : item.title;
-
         const cartItem = document.createElement("li");
         cartItem.classList.add("list-group-item", "d-flex", "justify-content-between", "align-items-center");
         cartItem.innerHTML = `
@@ -76,11 +105,21 @@ function updateCart() {
         cartItemsContainer.appendChild(cartItem);
     });
 
+    let discount = appliedPromo ? subtotal * appliedPromo : 0;
+    let total = subtotal - discount;
+
+    cartSubtotal.innerText = subtotal.toFixed(2);
+    cartDiscount.innerText = discount.toFixed(2);
     cartTotal.innerText = total.toFixed(2);
-    checkoutTotal.innerText = total.toFixed(2);
     sessionStorage.setItem("cart", JSON.stringify(cart));
 }
 
+clearCartButton.addEventListener("click", () => {
+    cart = [];
+    appliedPromo = null;
+    promoMessage.textContent = "";
+    updateCart();
+});
 
 function changeQuantity(index, change) {
     if (cart[index].quantity + change > 0) {
